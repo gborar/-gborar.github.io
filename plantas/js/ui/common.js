@@ -2,6 +2,9 @@ import { h } from "./dom.js";
 import { statusOf, statusText } from "../schedule.js";
 import { getSpecies, OTHER } from "../species.js";
 
+// La versión de claude.ai, la única que identifica por foto sin servidor propio.
+export const CLAUDE_APP_URL = "https://claude.ai/artifact/Exkksm2WAzhoUGioPbw1k6";
+
 // Ejecuta una acción asíncrona con el botón desactivado mientras dura.
 export async function busy(btn, fn) {
   btn.disabled = true;

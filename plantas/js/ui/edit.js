@@ -1,5 +1,5 @@
 import { h, field } from "./dom.js";
-import { bar, busy, photoButtons, archPhoto, confirmButton } from "./common.js";
+import { bar, busy, photoButtons, archPhoto, confirmButton, CLAUDE_APP_URL } from "./common.js";
 import { identifyPanel } from "./identify.js";
 import { OTHER, searchSpecies, getSpecies } from "../species.js";
 import { createPlant, updatePlant, addPhoto, logEvent, deletePlant } from "../garden.js";
@@ -66,7 +66,11 @@ export async function editScreen({ id }, ctx) {
   const identifyHelp = ctx.identifier ? null
     : h("p", { class: "hint" }, ctx.mode === "artifact"
       ? "La identificación por foto no está disponible en esta vista. Elige la especie abajo."
-      : "La identificación por foto necesita configurar un servicio (Ajustes). Mientras, elige la especie abajo.");
+      : [
+        "Esta versión no reconoce plantas por foto. Elige la especie abajo, o identifícala en la versión de claude.ai: ",
+        h("a", { href: CLAUDE_APP_URL, target: "_blank", rel: "noopener" }, "abrir Mis plantas en claude.ai"),
+        ".",
+      ]);
 
   const onFile = async file => {
     try {

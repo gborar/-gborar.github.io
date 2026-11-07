@@ -1,5 +1,5 @@
 import { h, field } from "./dom.js";
-import { bar, busy } from "./common.js";
+import { bar, busy, CLAUDE_APP_URL } from "./common.js";
 import { buildIcs, generalReminder, googleCalendarUrl } from "../calendar.js";
 import { exportBackup, importBackup } from "../backup.js";
 import { notificationState, enableNotifications } from "../notify.js";
@@ -49,9 +49,15 @@ export async function settingsScreen(_, ctx) {
     const url = h("input", { type: "url", inputmode: "url", placeholder: "https://mis-plantas.tu-cuenta.workers.dev", value: s.serverUrl ?? "", autocomplete: "off" });
     const code = h("input", { type: "password", autocomplete: "off", value: s.accessCode ?? "" });
     idBlock = h("div", {},
-      h("p", { class: "hint" }, ctx.identifier
-        ? "Configurada con tu servidor. La clave de la IA está en el servidor, no en el móvil."
-        : "Sin configurar: elige la especie a mano. Para identificar por foto hace falta tu propio servidor (instrucciones en plantas/servidor/LEEME.md). Nunca pegues una clave de OpenAI o Anthropic aquí: va en el servidor."),
+      ctx.identifier
+        ? h("p", { class: "notice ok" }, "Configurada con tu servidor. La clave de la IA está en el servidor, no en el móvil.")
+        : h("p", {}, "Esta versión no reconoce plantas por foto: aquí eliges la especie a mano. Para identificar una planta, usa la versión de claude.ai, que lo hace con tu cuenta y sin configurar nada. Después pasa las plantas con la copia de seguridad."),
+      ctx.identifier ? null : h("a", { class: "btn primary", href: CLAUDE_APP_URL, target: "_blank", rel: "noopener" }, "Abrir Mis plantas en claude.ai"),
+      h("details", { open: !!ctx.identifier },
+        h("summary", {}, "Avanzado: usar mi propio servidor"),
+        h("p", { class: "hint" }, "Solo si has montado el servidor de plantas/servidor/ con tu propia clave de IA. Nunca pegues aquí una clave de OpenAI o Anthropic: va en el servidor."),
+        serverFields()));
+    function serverFields() { return h("div", {},
       field("Dirección del servidor", url),
       field("Código de acceso", code, "El código que pusiste como CODIGO_ACCESO en el servidor. No es la clave de la IA."),
       h("button", { class: "btn secondary", type: "button", onclick: async e => busy(e.currentTarget, async () => {
@@ -60,7 +66,7 @@ export async function settingsScreen(_, ctx) {
         await ctx.saveSettings({ serverUrl: v || null, accessCode: code.value || null });
         ctx.toast(v ? "Servidor guardado" : "Servidor quitado");
         ctx.refresh({ keepScroll: true });
-      }) }, "Guardar"));
+      }) }, "Guardar")); }
   }
 
   // Copia de seguridad.

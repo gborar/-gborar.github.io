@@ -1,6 +1,6 @@
 // Guarda la app en el móvil para abrirla sin conexión. Solo toca peticiones GET del propio sitio;
 // nunca las del servicio de identificación. Al cambiar los ficheros, sube VERSION.
-const VERSION = "mis-plantas-v2";
+const VERSION = "mis-plantas-v3";
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/app.css",
   "icons/icon.svg", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png",
