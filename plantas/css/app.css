@@ -132,6 +132,9 @@ img { max-width: 100%; }
 .stepper { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
 .stepper .btn { width: 48px; height: 48px; padding: 0; font-size: 1.5rem; }
 .stepper output { font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; min-width: 7.5em; text-align: center; }
+.btn.remind { width: 100%; margin-top: 10px; }
+.reminders { margin-top: 18px; border-color: color-mix(in srgb, var(--azulejo) 35%, var(--rule)); }
+.reminders .btn { width: 100%; margin: 4px 0 8px; }
 .cal-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .care-row { padding: 10px 0; border-top: 1px solid var(--rule); }
 .care-row:first-of-type { border-top: 0; }

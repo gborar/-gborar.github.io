@@ -4,11 +4,12 @@ import { identifyPanel } from "./identify.js";
 import { effectiveInterval, relativeDay } from "../schedule.js";
 import { suggestedInterval, seasonOf, SEASON_LABEL } from "../species.js";
 import { logEvent, removeEvent, updatePlant, addPhoto, removePhoto } from "../garden.js";
-import { plantReminder, buildIcs, googleCalendarUrl } from "../calendar.js";
+import { plantsReminders, buildIcs, googleCalendarUrl } from "../calendar.js";
 import { shrinkPhoto } from "../image.js";
 import { navigate } from "../router.js";
 
 const EVENT_TEXT = { riego: "Regada", humeda: "Tierra húmeda, sin regar", abono: "Abonada", nota: "Nota" };
+export const dayText = t => new Date(t).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
 const dateText = t => new Date(t).toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" });
 
 export async function plantScreen({ id }, ctx) {
@@ -22,8 +23,8 @@ export async function plantScreen({ id }, ctx) {
   const log = (type, msg) => async e => busy(e.currentTarget, async () => {
     const note = type === "nota" || type === "abono" ? noteInput.value.trim() : "";
     if (type === "nota" && !note) { noteInput.focus(); return ctx.toast("Escribe la nota primero."); }
-    await logEvent(ctx.store, plant, { type, note });
-    ctx.toast(msg);
+    const { plant: saved } = await logEvent(ctx.store, plant, { type, note });
+    ctx.toast(type === "riego" || type === "humeda" ? `${msg}. Próxima revisión: ${dayText(saved.nextCheckAt)}` : msg);
     reload();
   });
   const noteInput = h("input", { type: "text", placeholder: "Nota opcional (p. ej. hojas amarillas)", "aria-label": "Nota", maxlength: 200 });
@@ -36,10 +37,14 @@ export async function plantScreen({ id }, ctx) {
     reload();
   });
 
-  const reminders = ctx.settings;
-  const calendarLinks = plant.nextCheckAt ? h("div", { class: "cal-links" },
-    ctx.mode === "local" ? h("button", { class: "btn ghost small", type: "button", onclick: () => ctx.saveIcs(`revisar-${slug(plant.name)}.ics`, buildIcs([plantReminder(plant, reminders)])) }, "Aviso en el Calendario") : null,
-    h("a", { class: "btn ghost small", href: googleCalendarUrl(plantReminder(plant, reminders)), target: "_blank", rel: "noopener" }, "Aviso en Google Calendar")) : null;
+  // Aviso en el calendario para la próxima revisión de esta planta (suena con la app cerrada).
+  const reminder = plant.nextCheckAt ? plantsReminders([plant], ctx.settings)[0] : null;
+  const reminderButton = !reminder ? null : ctx.mode === "local"
+    ? h("button", { class: "btn ghost remind", type: "button", onclick: () => {
+        ctx.saveIcs(`revisar-${slug(plant.name)}.ics`, buildIcs([reminder]));
+        ctx.toast("En el Calendario, toca «Añadir»");
+      } }, `🔔 Recordármelo el ${dayText(reminder.start)}`)
+    : h("a", { class: "btn ghost remind", href: googleCalendarUrl(reminder), target: "_blank", rel: "noopener" }, `🔔 Recordármelo el ${dayText(reminder.start)} (Google Calendar)`);
 
   const photos = plant.photos ?? [];
   const idSlot = h("div");
@@ -63,6 +68,7 @@ export async function plantScreen({ id }, ctx) {
       h("div", { class: "note-line" }, noteInput,
         h("button", { class: "btn ghost small", type: "button", onclick: log("abono", "Abono apuntado") }, "Abonada"),
         h("button", { class: "btn ghost small", type: "button", onclick: log("nota", "Nota guardada") }, "Guardar nota")),
+      reminderButton,
       plant.lastWateredAt ? h("p", { class: "meta" }, `Último riego: ${relativeDay(plant.lastWateredAt, now)} (${dateText(plant.lastWateredAt)})`) : null),
 
     h("section", { class: "panel" },
@@ -73,8 +79,7 @@ export async function plantScreen({ id }, ctx) {
         h("button", { class: "btn ghost", type: "button", "aria-label": "Un día más", disabled: interval >= 60, onclick: setInterval_(interval + 1) }, "+")),
       h("p", { class: "hint" }, plant.intervalDays
         ? [`Lo has ajustado tú. Sugerido para ${SEASON_LABEL[seasonOf(now)]}: cada ${suggested} días. `, h("button", { class: "link", type: "button", onclick: setInterval_(null) }, "Volver al sugerido")]
-        : `Sugerido para ${species.id === "otra" ? "una planta genérica" : species.name.toLowerCase()} en ${SEASON_LABEL[seasonOf(now)]}${plant.location === "exterior" ? " y en exterior" : ""}. Cambia solo con la estación.`),
-      calendarLinks),
+        : `Sugerido para ${species.id === "otra" ? "una planta genérica" : species.name.toLowerCase()} en ${SEASON_LABEL[seasonOf(now)]}${plant.location === "exterior" ? " y en exterior" : ""}. Cambia solo con la estación.`)),
 
     careSheet(plant),
 

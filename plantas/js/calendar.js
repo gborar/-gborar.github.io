@@ -83,3 +83,16 @@ export function plantReminder(plant, { hour, minute }) {
     start,
   };
 }
+
+// Un aviso por planta, el día de su próxima revisión a la hora elegida. Si esa hora ya pasó
+// (revisión atrasada o de hoy), el aviso se pone en la próxima vez que llegue esa hora.
+export function plantsReminders(plants, { hour, minute }, now = new Date()) {
+  return plants
+    .filter(p => p.nextCheckAt)
+    .map(p => {
+      const r = plantReminder(p, { hour, minute });
+      if (r.start <= now) r.start = nextAt(hour, minute, now);
+      return r;
+    })
+    .sort((a, b) => a.start - b.start);
+}
